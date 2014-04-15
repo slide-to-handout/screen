@@ -5,7 +5,7 @@ var url = '/static/Sphinx.pdf';
 
 var pdfDoc: PDFDocumentProxy = null,
     pageNum = 1,
-    scale = 0.8,
+    scale = 1,
     canvas = <HTMLCanvasElement>document.getElementById('the-canvas'),
     ctx = canvas.getContext('2d');
 
@@ -19,11 +19,6 @@ function renderPage(num) {
         var viewport = page.getViewport(scale);
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-
-        ctx.beginPath();
-        ctx.moveTo(10,10);
-        ctx.lineTo(50,50);
-        ctx.stroke();
 
         document.getElementById('page_num').textContent = pageNum.toString();
         document.getElementById('page_count').textContent = pdfDoc.numPages.toString();
