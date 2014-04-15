@@ -1,7 +1,7 @@
 ///<reference path="pdf.d.ts" />
 "use strict";
 
-var url = 'Sphinx.pdf';
+var url = '/static/Sphinx.pdf';
 
 var pdfDoc: PDFDocumentProxy = null,
     pageNum = 1,

@@ -1,0 +1,17 @@
+{ "name": "slide-to-handout"
+, "version": "0.0.1"
+, "homepage": "https://github.com/slide-to-handout/"
+, "bin": ""
+, "repository":
+  { "type" : "git"
+  , "url" : "git@github.com:slide-to-handout/screen.git"
+  }
+, "dependencies":
+  { "express": "~4.0.0"
+  }
+, "devDependencies":
+  { "grunt": "~0.4.4"
+  , "grunt-typescript": "~0.3.1"
+  , "grunt-contrib-watch": "~0.6.1"
+  }
+}
