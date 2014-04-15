@@ -1,4 +1,4 @@
-///<reference path="pdf.d.ts" />
+///<reference path="../../DefinitelyTyped/pdf/pdf.d.ts" />
 "use strict";
 
 var url = '/static/Sphinx.pdf';

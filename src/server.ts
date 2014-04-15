@@ -1,5 +1,5 @@
-///<reference path="node.d.ts" />
-///<reference path="express.d.ts" />
+///<reference path="../DefinitelyTyped/node/node.d.ts" />
+///<reference path="../DefinitelyTyped/express/express.d.ts" />
 "use strict";
 
 import express = require('express');
