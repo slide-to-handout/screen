@@ -3,14 +3,14 @@
 
 var url = '/static/Sphinx.pdf';
 
-var pdfDoc: PDFDocumentProxy = null,
+var pdfDoc: PDFDocumentProxy,
     pageNum = 1,
     scale = 1,
     canvas = <HTMLCanvasElement>document.getElementById('the-canvas'),
     ctx = canvas.getContext('2d');
 
 // Get page info from document, resize canvas accordingly, and render page
-function renderPage(num) {
+function renderPage(num: number) {
     if (!pdfDoc) {
         console.log("pdf isn't loaded yet.");
     }
@@ -34,8 +34,9 @@ function renderPage(num) {
 }
 
 // Asynchronously download PDF as an ArrayBuffer
-PDFJS.getDocument(url).then(function (pdf) {
+PDFJS.getDocument(url).then(function (pdf: PDFDocumentProxy) {
     pdfDoc = pdf;
+    pageNum = 1;
     renderPage(pageNum);
 }, function(err) {
     console.log(err);
@@ -62,7 +63,7 @@ var VK = {
     DOWN: 40
 };
 
-document.addEventListener("keydown", function (e) {
+document.addEventListener("keydown", function (e: KeyboardEvent) {
     switch (e.which) {
         case VK.LEFT: goPrevious(); break;
         case VK.RIGHT: goNext(); break;
