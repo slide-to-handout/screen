@@ -1,5 +1,6 @@
 ///<reference path="../DefinitelyTyped/node/node.d.ts" />
 ///<reference path="../DefinitelyTyped/express/express.d.ts" />
+///<reference path="../DefinitelyTyped/socket.io/socket.io.d.ts" />
 "use strict";
 
 import express = require('express');
@@ -7,9 +8,11 @@ import http = require('http');
 import fs = require('fs');
 import url = require('url');
 import path = require('path');
+import socketio = require('socket.io');
 
 var app = express();
 export var server = http.createServer(app);
+var io = socketio.listen(server);
 
 app.use('/static', express.static(path.join(__dirname, '..', 'static')));
 app.use('/scripts', express.static(path.join(__dirname, 'web')));
