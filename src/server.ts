@@ -3,11 +3,13 @@
 "use strict";
 
 import express = require('express');
+import http = require('http');
 import fs = require('fs');
 import url = require('url');
 import path = require('path');
 
-export var app = express();
+var app = express();
+export var server = http.createServer(app);
 
 app.use('/static', express.static(path.join(__dirname, '..', 'static')));
 app.use('/scripts', express.static(path.join(__dirname, 'web')));
