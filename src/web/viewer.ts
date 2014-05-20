@@ -1,5 +1,8 @@
 ///<reference path="../../DefinitelyTyped/pdf/pdf.d.ts" />
+///<reference path="../../DefinitelyTyped/socket.io-client/socket.io-client.d.ts" />
 "use strict";
+
+declare var io: any;  // workaround
 
 var url = '/static/Sphinx.pdf';
 
@@ -8,6 +11,8 @@ var pdfDoc: PDFDocumentProxy,
     scale = 1,
     canvas = <HTMLCanvasElement>document.getElementById('the-canvas'),
     ctx = canvas.getContext('2d');
+
+var socket = io.connect('/screen');
 
 // Get page info from document, resize canvas accordingly, and render page
 function renderPage(num: number) {
@@ -69,3 +74,16 @@ document.addEventListener("keydown", function (e: KeyboardEvent) {
         case VK.RIGHT: goNext(); break;
     }
 }, false);
+
+socket.on('connect', function () {
+    console.log('connected via socket.io');
+});
+
+socket.on('move_page', function (params: {page: number}) {
+    console.log(params);
+    var page = params.page;
+    if (1 <= page && page <= pdfDoc.numPages) {
+        pageNum = page;
+        renderPage(pageNum);
+    }
+});
