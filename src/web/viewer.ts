@@ -4,22 +4,25 @@
 
 declare var io: any;  // workaround
 
-var url = '/static/Sphinx.pdf';
-
 class SlideScreen {
     private pdfDoc: PDFDocumentProxy;
     private pageNum: number;
     private scale: number;
+    private containerElem: HTMLElement;
     private canvas: HTMLCanvasElement;
     private ctx;
 
-    constructor(canvasId: string) {
+    constructor(elemId: string) {
         this.scale = 1;
-        this.canvas = <HTMLCanvasElement>document.getElementById(canvasId);
+        this.containerElem = document.getElementById(elemId);
+        var canvas = document.createElement('canvas');
+        this.containerElem.appendChild(canvas);
+        this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d');
     }
 
-    load(url: string) {
+    load(url?: string) {
+        var url: string = url || this.containerElem.dataset['url'].toString();
         var self = this;
         // Asynchronously download PDF as an ArrayBuffer
         PDFJS.getDocument(url).then(function (pdf: PDFDocumentProxy) {
@@ -89,8 +92,8 @@ enum VK {
 (function () {
     "use strict";
 
-    var screen = new SlideScreen('the-canvas');
-    screen.load(url);
+    var screen = new SlideScreen('slidescreen');
+    screen.load();
 
     document.addEventListener("keydown", function (e: KeyboardEvent) {
         switch (e.which) {

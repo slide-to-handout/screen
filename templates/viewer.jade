@@ -2,6 +2,8 @@ doctype html
 html
   head
     meta(charset="utf-8")
+    style.
+      #slidescreen canvas { display: block; border: 1px solid #333; }
   body
     div
       button(id="prev", onclick="goPrevious()") Previous
@@ -11,8 +13,7 @@ html
         span#page_num
         | /
         span#page_count
-    div
-      canvas#the-canvas(style="border:1px solid black;")
+    #slidescreen(data-url=files_root + "/" + pdf_path)
 
     script(src="/static/js/pdf.js")
     script(src="/socket.io/socket.io.js")
