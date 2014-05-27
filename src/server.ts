@@ -105,6 +105,8 @@ class Client {
         }
         this.channel = 'test_channel';
         this.socket.join(this.channel);
+        this.connected = true;
+        return 'ok';
     }
 
     onGetSlide(params: {}) {
