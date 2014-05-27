@@ -6,84 +6,109 @@ declare var io: any;  // workaround
 
 var url = '/static/Sphinx.pdf';
 
-var pdfDoc: PDFDocumentProxy,
-    pageNum = 1,
-    scale = 1,
-    canvas = <HTMLCanvasElement>document.getElementById('the-canvas'),
-    ctx = canvas.getContext('2d');
+class SlideScreen {
+    private pdfDoc: PDFDocumentProxy;
+    private pageNum: number;
+    private scale: number;
+    private canvas: HTMLCanvasElement;
+    private ctx;
 
-var socket = io.connect('/screen');
-
-// Get page info from document, resize canvas accordingly, and render page
-function renderPage(num: number) {
-    if (!pdfDoc) {
-        console.log("pdf isn't loaded yet.");
+    constructor(canvasId: string) {
+        this.scale = 1;
+        this.canvas = <HTMLCanvasElement>document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
     }
-    // Using promise to fetch the page
-    pdfDoc.getPage(num).then(function(page) {
-        var viewport = page.getViewport(scale);
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
 
-        document.getElementById('page_num').textContent = pageNum.toString();
-        document.getElementById('page_count').textContent = pdfDoc.numPages.toString();
+    load(url: string) {
+        var self = this;
+        // Asynchronously download PDF as an ArrayBuffer
+        PDFJS.getDocument(url).then(function (pdf: PDFDocumentProxy) {
+            self.pdfDoc = pdf;
+            self.setPageNum(1);
+        }, function(err) {
+            console.log(err);
+        });
+    }
 
-        // Render PDF page into canvas context
-        var renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-        page.render(renderContext);
+    setPageNum(page: number) {
+        page = page | 0;  // convert to int
+        if (1 <= page && page <= this.pdfDoc.numPages) {
+            this.pageNum = page;
+            this.renderPage();
+        }
+    }
+
+    // Get page info from document, resize canvas accordingly, and render page
+    renderPage() {
+        if (!this.pdfDoc) {
+            console.log("pdf isn't loaded yet.");
+        }
+        var num = this.pageNum;
+        var self = this;
+        // Using promise to fetch the page
+        this.pdfDoc.getPage(num).then(function(page) {
+            var viewport = page.getViewport(self.scale);
+            self.canvas.height = viewport.height;
+            self.canvas.width = viewport.width;
+
+            document.getElementById('page_num').textContent = num.toString();
+            document.getElementById('page_count').textContent = self.pdfDoc.numPages.toString();
+
+            // Render PDF page into canvas context
+            var renderContext = {
+                canvasContext: self.ctx,
+                viewport: viewport
+            };
+            page.render(renderContext);
+        });
+        // Update page counters
+    }
+
+    goPrevious() {
+        if (this.pageNum > 1) {
+            --this.pageNum;
+            this.renderPage();
+        }
+    }
+
+    goNext() {
+        if (this.pdfDoc && this.pageNum < this.pdfDoc.numPages) {
+            ++this.pageNum;
+            this.renderPage();
+        }
+    }
+}
+
+enum VK {
+    LEFT = 37,
+    UP = 38,
+    RIGHT = 39,
+    DOWN = 40,
+}
+
+(function () {
+    "use strict";
+
+    var screen = new SlideScreen('the-canvas');
+    screen.load(url);
+
+    document.addEventListener("keydown", function (e: KeyboardEvent) {
+        switch (e.which) {
+            case VK.LEFT: screen.goPrevious(); break;
+            case VK.RIGHT: screen.goNext(); break;
+        }
+    }, false);
+
+    var socket = io.connect('/screen');
+
+    socket.on('connect', function () {
+        console.log('connected via socket.io');
     });
-    // Update page counters
-}
 
-// Asynchronously download PDF as an ArrayBuffer
-PDFJS.getDocument(url).then(function (pdf: PDFDocumentProxy) {
-    pdfDoc = pdf;
-    pageNum = 1;
-    renderPage(pageNum);
-}, function(err) {
-    console.log(err);
-});
+    socket.on('move_page', function (params: {page: number}) {
+        console.log(params);
+        var page = params.page;
+        screen.setPageNum(page);
+    });
 
-function goPrevious() {
-    if (pageNum > 1) {
-        --pageNum;
-        renderPage(pageNum);
-    }
-}
-
-function goNext() {
-    if (pdfDoc && pageNum < pdfDoc.numPages) {
-        ++pageNum;
-        renderPage(pageNum);
-    }
-}
-
-var VK = {
-    LEFT: 37,
-    UP: 38,
-    RIGHT: 39,
-    DOWN: 40
-};
-
-document.addEventListener("keydown", function (e: KeyboardEvent) {
-    switch (e.which) {
-        case VK.LEFT: goPrevious(); break;
-        case VK.RIGHT: goNext(); break;
-    }
-}, false);
-
-socket.on('connect', function () {
-    console.log('connected via socket.io');
-});
-
-socket.on('move_page', function (params: {page: number}) {
-    console.log(params);
-    var page = params.page;
-    if (1 <= page && page <= pdfDoc.numPages) {
-        pageNum = page;
-        renderPage(pageNum);
-    }
-});
+})();
