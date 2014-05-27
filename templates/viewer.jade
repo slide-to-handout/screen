@@ -6,8 +6,8 @@ html
       #slidescreen canvas { display: block; border: 1px solid #333; }
   body
     div
-      button(id="prev", onclick="goPrevious()") Previous
-      button(id="next", onclick="goNext()") Next
+      button(id="prev", onclick="slideScreen.goPrevious()") Previous
+      button(id="next", onclick="slideScreen.goNext()") Next
       span(style="margin-left: 2em")
         | Page:
         span#page_num

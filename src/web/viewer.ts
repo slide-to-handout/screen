@@ -89,7 +89,7 @@ enum VK {
     DOWN = 40,
 }
 
-(function () {
+(function (window) {
     "use strict";
 
     var screen = new SlideScreen('slidescreen');
@@ -114,4 +114,5 @@ enum VK {
         screen.setPageNum(page);
     });
 
-})();
+    window.slideScreen = screen;
+})(window);
