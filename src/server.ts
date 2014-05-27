@@ -10,6 +10,8 @@ import url = require('url');
 import path = require('path');
 import socketio = require('socket.io');
 
+import util = require('util');
+
 var app = express();
 export var server = http.createServer(app);
 var io = socketio.listen(server);
@@ -110,7 +112,10 @@ class Client {
     }
 
     onGetSlide(params: {}) {
-
+        console.log(util.inspect(this.socket.handshake));
+        var hostname = this.socket.handshake.headers.host;
+        var download_url = url.resolve('http://' + hostname, '/static/Sphinx.pdf');
+        return {download_URL: download_url, pages: 41}
     }
 
     onMovePage(params: {page: number}) {
