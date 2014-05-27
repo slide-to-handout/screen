@@ -1,0 +1,19 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+  body
+    div
+      button(id="prev", onclick="goPrevious()") Previous
+      button(id="next", onclick="goNext()") Next
+      span(style="margin-left: 2em")
+        | Page:
+        span#page_num
+        | /
+        span#page_count
+    div
+      canvas#the-canvas(style="border:1px solid black;")
+
+    script(src="/static/js/pdf.js")
+    script(src="/socket.io/socket.io.js")
+    script(src="/scripts/viewer.js")

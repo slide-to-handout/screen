@@ -16,6 +16,9 @@ var app = express();
 export var server = http.createServer(app);
 var io = socketio.listen(server);
 
+app.set('views', path.join(path.dirname(__dirname), 'templates'));
+app.set('view engine', 'jade');
+
 app.use('/static', express.static(path.join(__dirname, '..', 'static')));
 app.use('/scripts', express.static(path.join(__dirname, 'web')));
 
@@ -23,7 +26,11 @@ app.use('/scripts', express.static(path.join(__dirname, 'web')));
 app.use('/src/web', express.static(path.join(__dirname, '..', 'src', 'web')));
 
 app.get('/', function (req: express.Request, res: express.Response) {
-    res.sendfile(path.join(__dirname, '..', 'static', 'viewer.html'));
+    var files_root = url.resolve(req.protocol + '://' + req.get('host'), '/static');
+    res.render('viewer', {
+        'files_root': files_root,
+        'pdf_path': 'Sphinx.pdf'
+    });
 });
 
 enum ErrorCode {
