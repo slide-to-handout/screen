@@ -1,6 +1,9 @@
 ///<reference path="../DefinitelyTyped/node/node.d.ts" />
 ///<reference path="../DefinitelyTyped/express/express.d.ts" />
+///<reference path="../DefinitelyTyped/passport/passport.d.ts" />
+///<reference path="../DefinitelyTyped/passport-facebook/passport-facebook.d.ts" />
 ///<reference path="./socket.io.d.ts" />
+///<reference path="../DefinitelyTyped/q/Q.d.ts" />
 "use strict";
 
 import express = require('express');
@@ -9,12 +12,29 @@ import fs = require('fs');
 import url = require('url');
 import path = require('path');
 import socketio = require('socket.io');
+import passport = require('passport');
+import passport_facebook = require('passport-facebook');
 
+import Q = require('q');
 import util = require('util');
+
+import models = require('./models');
 
 var app = express();
 export var server = http.createServer(app);
 var io = socketio.listen(server);
+var FacebookStrategy = passport_facebook.Strategy;
+
+passport.use(new FacebookStrategy(
+    {
+        clientID: '296679563842710',
+        clientSecret: 'bfa4480fb0279eabcb54abb6b769de8e',
+        callbackURL: 'http://localhost/auth/facebook/callback'
+    },
+    function (accessToken, refreshToken, profile, done) {
+
+    }
+));
 
 app.set('views', path.join(path.dirname(__dirname), 'templates'));
 app.set('view engine', 'jade');
@@ -31,6 +51,13 @@ app.get('/', function (req: express.Request, res: express.Response) {
         'files_root': files_root,
         'pdf_path': 'Sphinx.pdf'
     });
+});
+
+app.post('/login', function (req: express.Request, res: express.Response) {
+});
+
+app.get('/users', function (req: express.Request, res: express.Response) {
+
 });
 
 enum ErrorCode {
@@ -65,7 +92,7 @@ interface RequestMessage {
 
 class Client {
     private socket: socketio.Socket;
-    private channel: string;
+    private channel: {id: string};
     private connected: boolean;
 
     constructor(socket: socketio.Socket) {
@@ -73,7 +100,7 @@ class Client {
         this.connected = false;
     }
 
-    handleMessage(msg: RequestMessage) {
+    handleMessage(msg: RequestMessage): void {
         var socket = this.socket;
         var requestId = msg.id;
 
@@ -95,43 +122,49 @@ class Client {
         }
 
         var result;
-        try {
-            switch (method) {
-                case 'connect': result = this.onConnect(params); break;
-                case 'get_slide': result = this.onGetSlide(params); break;
-                case 'move_page': result = this.onMovePage(params); break;
-                default: handleError(ErrorCode.MethodNotFound); return;
-            }
-        } catch (e) {
-            socket.json.send({error: e.error, id: requestId});
+        switch (method) {
+            case 'connect': result = this.onConnect(params); break;
+            case 'get_slide': result = this.onGetSlide(params); break;
+            case 'move_page': result = this.onMovePage(params); break;
+            default: handleError(ErrorCode.MethodNotFound); return;
         }
-        socket.json.send({result: result, id: requestId});
+        result.done(function (result) {
+            socket.json.send({result: result, id: requestId});
+        }, function (error) {
+            socket.json.send({error: error, id: requestId});
+        });
     }
 
-    onConnect(params: {session: string}) {
+    onConnect(params: {session: string}): Q.Promise<string> {
         if (this.connected) {
-            throw {error: buildError(ErrorCode.InvalidRequest)};
+            return Q.reject(buildError(ErrorCode.InvalidRequest));
         }
-        this.channel = 'test_channel';
-        this.socket.join(this.channel);
-        this.connected = true;
-        return 'ok';
+        var self = this;
+        models.SessionCollection.getByKey(params.session).then(function (session) {
+            self.channel = session.channel;
+            self.socket.join(self.channel.id);
+            self.connected = true;
+            return 'ok';
+        }, function (reason: any) {
+            return Q.reject(buildError(ErrorCode.InternalError));
+        });
     }
 
-    onGetSlide(params: {}) {
+    onGetSlide(params: {}): Q.Promise<any> {
         console.log(util.inspect(this.socket.handshake));
         var hostname = this.socket.handshake.headers.host;
-        var download_url = url.resolve('http://' + hostname, '/static/Sphinx.pdf');
-        return {download_URL: download_url, pages: 41}
+        return this.channel.getSlideInformation(hostname).then(function (info) {
+            return {download_URL: info.download_URL, pages: info.pages};
+        });
     }
 
-    onMovePage(params: {page: number}) {
+    onMovePage(params: {page: number}): Q.Promise<any> {
         var page = params.page;
         if (typeof page !== 'number') {
-            throw {error: buildError(ErrorCode.InvalidParams)};
+            return Q.reject(buildError(ErrorCode.InvalidParams));
         }
         screen.in(this.channel).emit('move_page', {page: page});
-        return {page: page};
+        return Q.resolve({page: page});
     }
 
     onDisconnect() {
